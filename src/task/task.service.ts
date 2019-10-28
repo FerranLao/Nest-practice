@@ -1,15 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { Task, TaskStatus } from './task.model';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { GetTaskFilterDto } from './dto/get-task-filter.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-
 @Injectable()
 export class TaskService {
-  private tasks: Task[] = [];
-
-  constructor(@InjectModel('Task') private readonly taskModel: Model<Task>) {}
+  private logger = new Logger('Task');
+  constructor(@InjectModel('Task') private readonly taskModel: Model<Task>) { }
 
   async getAllTask(): Promise<Task[]> {
     const allTask: Task[] = await this.taskModel.find();
@@ -25,28 +23,32 @@ export class TaskService {
     return tasks;
   }
 
-  getTaksbyId(id: string): Task {
-    const found = this.tasks.find(task => task._id === id);
+  async getTaksbyId(id: string, userId: string): Promise<Task> {
+    const found = await this.taskModel.findOne({ _id: id, user: userId });
     if (!found) {
       throw new NotFoundException(`Task with ID:${id} not found`);
     }
     return found;
   }
 
-  async createTask(createTaskDto: CreateTaskDto): Promise<Task> {
+  async createTask(createTaskDto: CreateTaskDto, userId: string): Promise<Task> {
     const { title, description } = createTaskDto;
     const task: Task = {
       title,
       description,
       status: TaskStatus.OPEN,
+      user: userId,
     };
     const newTask = await this.taskModel.create(task);
     return newTask;
   }
 
-  updateTaskstatus(id: string, status: TaskStatus): Task {
-    const task = this.getTaksbyId(id);
-    task.status = status;
+  async updateTaskstatus(id: string, status: TaskStatus, userId: string): Promise<Task> {
+    const task = await this.taskModel.findOneAndUpdate({ _id: id, user: userId }, { status });
+    this.logger.debug(task);
+    if (!task) {
+      throw new NotFoundException(`Task with ID:${id} not found`);
+    }
     return task;
   }
 
