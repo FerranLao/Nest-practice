@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.model';
@@ -10,7 +10,7 @@ import { JwtPayload } from './jwt-payload.interface';
 export class AuthService {
 
     private readonly bcryptSalt: number = 10;
-
+    private logger = new Logger('AuthService');
     constructor(
         @InjectModel('User')
         private readonly userModel: Model<User>,
@@ -31,6 +31,7 @@ export class AuthService {
         const { password, userName } = authCredentialsDto;
         const found = await this.userModel.findOne({ userName });
         if (!found || found.password !== await this.hashPassword(password, found.salt)) {
+            this.logger.verbose(`Failed atempt to sign in with :${JSON.stringify(authCredentialsDto)}`);
             throw new UnauthorizedException('Invalid credentials');
         }
         const payload: JwtPayload = { userName };
