@@ -1,7 +1,7 @@
 import * as mongoose from 'mongoose';
 
 export const UserSchema = new mongoose.Schema({
-  userName: String,
-  age: String,
-  password: String,
+  userName: { type: String, unique: true, required: true },
+  password: { type: String, required: true },
+  salt: { type: String, required: true },
 });

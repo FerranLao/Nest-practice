@@ -9,16 +9,19 @@ import {
   Query,
   UsePipes,
   ValidationPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { Task, TaskStatus } from './task.model';
 import { GetTaskFilterDto } from './dto/get-task-filter.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { TaskStatusValidationPipe } from './pipes/task-status-validation.pipe';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('tasks')
+@UseGuards(AuthGuard('jwt'))
 export class TaskController {
-  constructor(private taskService: TaskService) {}
+  constructor(private taskService: TaskService) { }
 
   @Get()
   async getAllTask(
